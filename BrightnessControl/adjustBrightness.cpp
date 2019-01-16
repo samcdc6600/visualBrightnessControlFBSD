@@ -79,7 +79,7 @@ void printUsage(const std::string name);
 int main(const int argc, const char * argv[])
 {				// BR_DEFAULT should be divisible by BR_INTERVAL_GRANULARITY!
   constexpr int BR_RANGE_MIN {10}, BR_RANGE_MAX {100}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
-  constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_2_INDEX {1}; // ARG_1_INDEX {0}
+  constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_2_INDEX {1}; // ARG_1_INDEX {0}.
   constexpr char brLevelFileName [] = "/usr/tmp/brLevel";
   int brLevel {getIntFromFile(BR_DEFAULT, brLevelFileName)}; // Attempt to get current brightness level.
 
