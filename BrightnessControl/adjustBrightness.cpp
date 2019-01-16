@@ -27,6 +27,7 @@ struct context
   unsigned int displayHeight;
   int windowLen;
 };
+constexpr int EXIT_SUCESS			{1}; // Program executed without errors (hopefully.)
 constexpr int FATAL_ERROR_ONE		 	{-1}; // AdjustBR_Val returned -1.
 constexpr int FATAL_ERROR_TWO	 		{-2}; // Could not open display.
 constexpr int FATAL_ERROR_THREE_CYAN 		{-3}; // Failed to allocate color cyan.
@@ -95,7 +96,7 @@ int main(const int argc, const char * argv[])
       else
 	if(argc == MIN_ARGC)
 	  { /* Set brightness to level specified in brLevelFileName or if that value is out of
-					   range set level to BR_DEFAULT */
+	       range set level to BR_DEFAULT */
 	    if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	      brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
 	    doWork(brLevel, brLevelFileName);
@@ -105,45 +106,7 @@ int main(const int argc, const char * argv[])
 	  printUsage(argv[0]);
     }
 
-
-
-
-
-  /*
-  if(argc == MAX_ARGC)
-    {
-      const char arg {argv[ARG_2_INDEX][0]}; // If there is only one argument argv[ARG_2_INDEX] should equal '\0' 
-      
-      if(argv[ARG_2_INDEX][1] == '\0' && (arg == '+' || arg == '-'))
-	{			// We have a well formed second argument.
-	  brLevel = adjustBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, arg, brLevel);
-	  std::cout<<"level = "<<brLevel<<std::endl;
-	  if(brLevel == -1)
-	    {			// Arg did not match any case
-	      puts("FATAL ERROR: adjustBR_Val returned -1");
-	      return brLevel;
-	    }
-	  if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
-	    brLevel = BR_DEFAULT; // If we did not get a good brightness value from getIntFromFile.
-	  doWork(brLevel, brLevelFileName);
-	  return 0;
-	}
-	else
-	  printUsage(argv[0]);	// Malformed input.
-    }
-  else
-    if(argc == MIN_ARGC)
-      {				/* Set brightness to level specified in brLevelFileName or if that value is out of
-				   range set level to BR_DEFAULT 
-	if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
-	  brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
-	doWork(brLevel, brLevelFileName);
-	return 0;
-      }
-    else
-      printUsage(argv[0]);
-  
-  return -1;*/
+  return (EXIT_SUCESS);
 }
 
 
@@ -194,7 +157,7 @@ int adjustBR_Val(const int rMax, const int rMin, const int iGran, const char sig
 	break;
       return a - iGran;
     }
-  return -1;
+  return a;
 }
 
 
