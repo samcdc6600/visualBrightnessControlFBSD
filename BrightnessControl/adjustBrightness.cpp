@@ -31,7 +31,7 @@ struct context
 
 void printUsage(const std::string name);
 // Read an int for the file f.
-int getIntFromFile(const int rDefalut, const std::string f);
+int getIntFromFile(const int rDefalut, const char f []);
 // Checks that a is inbetween or equal to rMax and rMin and that (a % iGran == 0) it is a multiple of iGran!
 bool checkBR_Val(const int rMax, const int rMin, const int iGran, const int a);
 /* Returns (a + iGran) or (a - iGran) depending on whether arg is a '+' or a '-'.
@@ -47,7 +47,8 @@ void drawBar(context & con, const int cu, const int nBar, const int nSpace, cons
 // Save int a to file at path f.
 void saveIntToFile(const std::string f, const int a);
 // Cange the brightness level, save the brightness level, show the brightness level.
-void doWork()
+void doWork(const int level, const char file []);
+bool handle2ndArg(const char * argv []);
 
 
 /* Main requires 1 or 2 command line argument's (this includes the program name)
@@ -56,14 +57,37 @@ int main(int argc, char * argv[])
 {				// Brightness level constraints.
   constexpr int BR_RANGE_MAX {100}, BR_RANGE_MIN {10}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
   constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_1_INDEX {0}, ARG_2_INDEX {1};
-  const std::string brLevelFileName {"/usr/tmp/brLevel"};
+  constexpr char brLevelFileName [] = "/usr/tmp/brLevel";
   int brLevel {getIntFromFile(BR_DEFAULT, brLevelFileName)}; // Attempt to get current brightness level.
 
   if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
-    brLevel = BR_DEFAULT;
+    {
+      brLevel = BR_DEFAULT;
+      doWork(brLevel, brLevelFileName);	      
+    }
   else
     {
+      if(argc == MAX_ARGC)
+	{
+	  handle2ndArg(argv);
+	}
+      else
+	if(argc == MIN_ARGC)
+	  {				/* Set brightness to level specified in brLevelFileName or if that value is out of
+					   range set level to BR_DEFAULT */
+	    if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
+	      brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
+	    doWork(brLevel, brLevelFileName);
+	    return 0;
+	  }
+	else
+	  printUsage(argv[0]);
     }
+
+
+
+
+
 
   if(argc == MAX_ARGC)
     {
@@ -80,7 +104,7 @@ int main(int argc, char * argv[])
 	    }
 	  if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	    brLevel = BR_DEFAULT; // If we did not get a good brightness value from getIntFromFile.
-	  doWork();
+	  doWork(brLevel, brLevelFileName);
 	  return 0;
 	}
 	else
@@ -92,8 +116,7 @@ int main(int argc, char * argv[])
 				   range set level to BR_DEFAULT */
 	if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	  brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
-
-	doWork();
+	doWork(brLevel, brLevelFileName);
 	return 0;
       }
     else
@@ -110,10 +133,10 @@ void printUsage(const std::string name)
 }
 
 
-int getIntFromFile(const int rDefault, const std::string f)
+int getIntFromFile(const int rDefault, const char f [])
 {
     int ret {};
-    std::ifstream in(f.c_str());
+    std::ifstream in(f);
     if(in.is_open())
       {
 	in>>ret;
@@ -251,7 +274,7 @@ void draw(context & con, const int brLevel)
   /*  if(brLevel < 10)//it never goes below 20!
       textInfo<<"  ";*/
   if(brLevel < 100)
-    textInfo<<" ";
+    textInfo<<' ';
   textInfo<<"%"<<brLevel<<" :ssenthgirB";//everything to the left of the brLevel bar's    
   XSetForeground(con.display, con.gc, con.cyan.pixel);//set forground colour
   XDrawString(con.display, con.window, con.gc, con.windowLen -100, 12, textInfo.str().c_str(), textInfo.str().size());
@@ -304,18 +327,39 @@ void drawBar(context & con, const int cu, const int nBar, const int nSpace, cons
 void saveIntToFile(const std::string f, const int a)
 {
   std::ofstream out(f.c_str());      
-  out<<a<<"\0";
+  out<<a<<'\0';
   out.close();
 }
 
 
 // Cange the brightness level, save the brightness level, show the brightness level.
-void doWork()
+void doWork(const int level, const char file [])
 {
   std::stringstream command {};
-  command<<"~/.config/brightness/brctl.sh "<<std::to_string(brLevel);
+  command<<"~/.config/brightness/brctl.sh "<<std::to_string(level);
   system(command.str().c_str()); // Change brightness level.
-  std::cout<<"level = "<<brLevel<<"\n";
-  saveIntToFile(brLevelFileName, brLevel); // Save brightness level.
-  display(brLevel);	// Show brightness level.
+  std::cout<<"level = "<<level<<'\n';
+  saveIntToFile(file, level); // Save brightness level.
+  display(level);	// Show brightness level.
+}
+
+
+bool handle2ndArg(const char * argv [])
+{
+  const char arg {argv[ARG_2_INDEX][0]}; // If there is only one argument argv[ARG_2_INDEX] should equal '\0' 
+      
+  if(argv[ARG_2_INDEX][1] == '\0' && (arg == '+' || arg == '-'))
+    {			// We have a well formed second argument.
+      brLevel = adjustBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, arg, brLevel);
+      std::cout<<"level = "<<brLevel<<'\n';
+      if(brLevel == -1)
+	{			// Arg did not match any case
+	  puts("FATAL ERROR: adjustBR_Val returned -1");
+	  return brLevel;
+	}
+      doWork(brLevel, brLevelFileName);
+      return 0;
+    }
+  else
+    printUsage(argv[0]);	// Malformed input.
 }
