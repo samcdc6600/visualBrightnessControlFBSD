@@ -25,7 +25,18 @@ struct context
   int screenNum;
   unsigned int displayWidth;
   unsigned int displayHeight;
-  int windowLen;
+  const int WINDOW_LEN {683};	// X offset (from the left) = displayWidth - WINDOW_LEN
+  const int Y_OFFSET {2};	// Offset from the top of the screen.
+  const int WINDOW_HEIGHT {15};	// Height of the window
+  const int BAR_SPACE_SIZE {44}; // Size of bar (outer) and space
+  const int BARS_OFFSET {174};	 // Offset of bars from text on right.
+  const int OUTER_BAR_Y {1};	 // Y Offset of outer bar
+  const int OUTER_BAR_WIDTH {48};
+  const int OUTER_BAR_HEIGHT {13};
+  const int INNER_BAR_X_OFFSET {3};
+  const int INNER_BAR_Y {4};
+  const int INNER_BAR_WIDTH {42};
+  const int INNER_BAR_HEIGHT {7};
 };
 constexpr int EXIT_SUCESS			{1}; // Program executed without errors (hopefully.)
 constexpr int FATAL_ERROR_ONE		 	{-1}; // AdjustBR_Val returned -1.
@@ -40,27 +51,27 @@ constexpr int FATAL_ERROR_THREE_RED		{-9}; // Failed to allocate color red.
 constexpr int FATAL_ERROR_THREE_DARK_RED	{-10}; // Failed to allocate color dark red.
 
 
-void printUsage(const std::string name);
-// Read an int for the file f.
+// Read an int from the file f.
 int getIntFromFile(const int rDefalut, const char f []);
 // Checks that a is inbetween or equal to rMax and rMin and that (a % iGran == 0) it is a multiple of iGran!
 bool checkBR_Val(const int rMin, const int rMax, const int iGran, const int a);
+// Cange the brightness level, save the brightness level, show the brightness level.
+void doWork(const int level, const char file []);
+// Save int a to file at path f.
+void saveIntToFile(const std::string f, const int a);
+void display(const int brLevel);
+void init(context & con);
+// Display brightness level on screen.
+void draw(context & con, const int brLevel);
+void drawBars(context & con, const int brLeve);
+void drawBar(context & con, const int cu, const int nBar, const int nSpace, const std::string barNumber);
+bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RANGE_MAX,
+		  const int BR_INTERVAL_GRANULARITY, const int ARG_2_INDEX, int & brLevel);
 /* Returns (a + iGran) or (a - iGran) depending on whether arg is a '+' or a '-'.
    Additionally a will not be altered if altering it would cause it to fall outside of the range
    [rMin, rMax], in effect a saturates at these ranges. */
 int adjustBR_Val(const int rMax, const int rMin, const int iGran, const char arg, const int a);
-// Display brightness level on screen
-void display(const int brLevel);
-void init(context & con);
-void draw(context & con, const int brLevel);
-void drawBars(context & con, const int brLeve);
-void drawBar(context & con, const int cu, const int nBar, const int nSpace, const std::string barNumber);
-// Save int a to file at path f.
-void saveIntToFile(const std::string f, const int a);
-// Cange the brightness level, save the brightness level, show the brightness level.
-void doWork(const int level, const char file []);
-bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RANGE_MAX,
-		  const int BR_INTERVAL_GRANULARITY, const int ARG_2_INDEX, int & brLevel);
+void printUsage(const std::string name);
 
 
 /* Main requires 1 or 2 command line argument's (this includes the program name)
@@ -74,7 +85,7 @@ int main(const int argc, const char * argv[])
 
   if(!checkBR_Val(BR_RANGE_MIN, BR_RANGE_MAX, BR_INTERVAL_GRANULARITY, brLevel))
     {
-      std::cout<<"Brightness level stored in \""<<brLevelFileName<<"\", not evenly divisible by "
+      std::cerr<<"Brightness level stored in \""<<brLevelFileName<<"\", not evenly divisible by "
 	"BR_INTERVAL_GRANULARITY ("<<BR_INTERVAL_GRANULARITY<<") or was not able to open file containing"
 	" brightness level. Setting brightness level to dealfult ("<<BR_DEFAULT<<")\n";
       brLevel = BR_DEFAULT;
@@ -108,13 +119,6 @@ int main(const int argc, const char * argv[])
 }
 
 
-void printUsage(const std::string name)
-{
-  std::cerr<<"error!\nusage: "<<name<<" [options]\nOPTIONS\n\t+\tIncrease screen brightness\n\t-\tDecrease screen"
-    "brightness\n";
-}
-
-
 int getIntFromFile(const int rDefault, const char f [])
 {
     int ret {};
@@ -142,20 +146,29 @@ bool checkBR_Val(const int rMin, const int rMax, const int iGran, const int a)
 }
 
 
-int adjustBR_Val(const int rMax, const int rMin, const int iGran, const char sign, const int a)
+void doWork(const int level, const char file [])
 {
-  switch(sign)
+  std::stringstream command {};
+  command<<"~/.config/brightness/brctl.sh "<<std::to_string(level);
+  system(command.str().c_str()); // Change brightness level.
+  std::cout<<"level = "<<level<<'\n';
+  saveIntToFile(file, level); // Save brightness level.
+  display(level);	// Show brightness level.
+}
+
+
+void saveIntToFile(const std::string f, const int a)
+{
+  std::ofstream out(f.c_str());
+  if(out.is_open())
     {
-    case '+':
-      if(a == rMax)
-	break;
-      return a + iGran;      
-    case '-':
-      if(a == rMin)
-	break;
-      return a - iGran;
+      out<<a<<'\0';    
+      out.close();
     }
-  return a;
+  else
+    {
+      std::cerr<<"Error cant open file \""<<f<<"\" for writing.\n";
+    }
 }
 
 
@@ -188,9 +201,9 @@ void init(context & con)
   
   con.attribs.override_redirect = 1; // Non bordered / decorated window.
 
-  con.windowLen = 683;
-  con.window = XCreateWindow(con.display, RootWindow(con.display, 0), con.displayWidth -con.windowLen, 2,
-			     con.windowLen, 15, 0, CopyFromParent, CopyFromParent, CopyFromParent,
+  //con.windowLen = 683;
+  con.window = XCreateWindow(con.display, RootWindow(con.display, 0), con.displayWidth -con.WINDOW_LEN, con.Y_OFFSET,
+			     con.WINDOW_LEN, con.WINDOW_HEIGHT, 0, CopyFromParent, CopyFromParent, CopyFromParent,
 			     CWOverrideRedirect, &con.attribs);
   XSetWindowBackground(con.display, con.window, 0x1900ff); // 0x84ffdc cool colour.
   XClearWindow(con.display, con.window );
@@ -253,7 +266,7 @@ void init(context & con)
 
 
 void draw(context & con, const int brLevel)
-{
+{				// Black magic numbers in this function :'( (Can't be bothered to fix rn.)
   std::stringstream textInfo {};
   /*  if(brLevel < 10)//it never goes below 20!
       textInfo<<"  ";*/
@@ -261,11 +274,12 @@ void draw(context & con, const int brLevel)
     textInfo<<' ';
   textInfo<<"%"<<brLevel<<" :ssenthgirB";//everything to the left of the brLevel bar's    
   XSetForeground(con.display, con.gc, con.cyan.pixel);//set forground colour
-  XDrawString(con.display, con.window, con.gc, con.windowLen -100, 12, textInfo.str().c_str(), textInfo.str().size());
-  XDrawString(con.display, con.window, con.gc, con.windowLen -117, 12, "-", 1);
+  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -100, 12, textInfo.str().c_str(),
+	      textInfo.str().size());
+  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -117, 12, "-", 1);
   XDrawString(con.display, con.window, con.gc, 10, 12, "+", 1);
   XDrawArc(con.display, con.window, con.gc, 5, 0, 14, 14, 0, 360*64);//right circle around "-"
-  XDrawArc(con.display, con.window, con.gc, con.windowLen -122, 0, 14, 14, 0, 360*64);//left circle around "+"
+  XDrawArc(con.display, con.window, con.gc, con.WINDOW_LEN -122, 0, 14, 14, 0, 360*64);//left circle around "+"
   drawBars(con, brLevel);  //draw the brLevel bars                                    
 }
 
@@ -295,42 +309,18 @@ void drawBars(context & con, const int brLeve)
 }
 
 
-void drawBar(context & con, const int cu, const int nBar, const int nSpace, const std::string barNumber)
-{
-          XSetForeground(con.display, con.gc, cu);
-          XFillRectangle(con.display, con.window, con.gc, con.windowLen -(174 + nBar + (nSpace*44)) , 1, 48, 13);
-//        XFillRectangle(con.display, con.window, con.gc, 108 + nBar + (nSpace*18), 1, 16, 13);	  
-          XSetForeground(con.display, con.gc, con.blue.pixel);
-          XFillRectangle(con.display, con.window, con.gc, con.windowLen -(174 + nBar + (nSpace*44) - 3), 4, 42, 7);
-//        XFillRectangle(con.display, con.window, con.gc, 108 + nBar + (nSpace*18) +3, 4, 10, 7);
-          XSetForeground(con.display, con.gc, con.cyan.pixel);
-}
-
-
-void saveIntToFile(const std::string f, const int a)
-{
-  std::ofstream out(f.c_str());
-  if(out.is_open())
-    {
-      out<<a<<'\0';    
-      out.close();
-    }
-  else
-    {
-      std::cerr<<"Error cant open file \""<<f<<"\" for writing\n";
-    }
-}
-
-
-// Cange the brightness level, save the brightness level, show the brightness level.
-void doWork(const int level, const char file [])
-{
-  std::stringstream command {};
-  command<<"~/.config/brightness/brctl.sh "<<std::to_string(level);
-  system(command.str().c_str()); // Change brightness level.
-  std::cout<<"level = "<<level<<'\n';
-  saveIntToFile(file, level); // Save brightness level.
-  display(level);	// Show brightness level.
+void drawBar(context & con, const int cu, const int nBar, const int stride, const std::string barNumber)
+{				// Draw outer bar.
+  XSetForeground(con.display, con.gc, cu);  
+  XFillRectangle(con.display, con.window, con.gc,
+		 con.WINDOW_LEN -(con.BARS_OFFSET + nBar + (stride*con.BAR_SPACE_SIZE)),
+		 con.OUTER_BAR_Y, con.OUTER_BAR_WIDTH, con.OUTER_BAR_HEIGHT);
+  // Draw inner bar.
+  XSetForeground(con.display, con.gc, con.blue.pixel);
+  XFillRectangle(con.display, con.window, con.gc,
+		 con.WINDOW_LEN -(con.BARS_OFFSET + nBar + (stride*con.BAR_SPACE_SIZE) - con.INNER_BAR_X_OFFSET),
+		 con.INNER_BAR_Y, con.INNER_BAR_WIDTH, con.INNER_BAR_HEIGHT);
+  XSetForeground(con.display, con.gc, con.cyan.pixel);
 }
 
 
@@ -344,7 +334,7 @@ bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RAN
       brLevel = adjustBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, arg, brLevel);
       if(brLevel == -1)
 	{			// Arg did not match any case
-	  std::cout<<"FATAL ERROR: adjustBR_Val returned -1, brLevel = "<<brLevel<<'\n';
+	  std::cerr<<"FATAL ERROR: adjustBR_Val returned -1, brLevel = "<<brLevel<<'\n';
 	  exit(FATAL_ERROR_ONE);
 	}
       return true;
@@ -353,4 +343,28 @@ bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RAN
     {
       return false;
     }
+}
+
+
+int adjustBR_Val(const int rMax, const int rMin, const int iGran, const char sign, const int a)
+{
+  switch(sign)
+    {
+    case '+':
+      if(a == rMax)
+	break;
+      return a + iGran;      
+    case '-':
+      if(a == rMin)
+	break;
+      return a - iGran;
+    }
+  return a;
+}
+
+
+void printUsage(const std::string name)
+{
+  std::cout<<"error!\nusage: "<<name<<" [options]\nOPTIONS\n\t+\tIncrease screen brightness\n\t-\tDecrease screen"
+    "brightness\n";
 }
