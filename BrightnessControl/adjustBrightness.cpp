@@ -74,17 +74,18 @@ int main(int argc, char * argv[])
 	    brLevel = BR_DEFAULT; // If we did not get a good brightness value from getIntFromFile.	  
 	  std::stringstream command {};
 	  command<<"~/.config/brightness/brctl.sh "<<std::to_string(brLevel);
-	  system(command.str().c_str()); // Change brightness
-	  saveIntToFile(brLevelFileName, brLevel);
-	  display(brLevel);
+	  system(command.str().c_str()); // Change brightness level.
+	  saveIntToFile(brLevelFileName, brLevel); // Save brightness level.
+	  display(brLevel);	// Show brightness level.
 	  return 0;
 	}
 	else
-	  printUsage(argv[0]);
+	  printUsage(argv[0]);	// Malformed input.
     }
   else
     if(argc == MIN_ARGC)
-      {
+      {				/* Set brightness to level specified in brLevelFileName or if that value is out of
+				   range set level to BR_DEFAULT */
 	if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	  brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
 	    
