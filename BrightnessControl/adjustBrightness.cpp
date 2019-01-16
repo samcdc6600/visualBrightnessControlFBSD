@@ -27,14 +27,16 @@ struct context
   unsigned int displayHeight;
   int windowLen;
 };
-// Brightness level constraints.
-constexpr int BR_RANGE_MAX {100}, BR_RANGE_MIN {10}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
+
 
 void printUsage(const std::string name);
 // Read an int for the file f.
 int getIntFromFile(const int rDefalut, const std::string f);
 // Checks that a is inbetween or equal to rMax and rMin and that (a % iGran == 0) it is a multiple of iGran!
 bool checkBR_Val(const int rMax, const int rMin, const int iGran, const int a);
+/* Returns (a + iGran) or (a - iGran) depending on whether arg is a '+' or a '-'.
+   Additionally a will not be altered if altering it would cause it to fall outside of the range
+   [rMin, rMax], in effect a saturates at these ranges. */
 int adjustBR_Val(const int rMax, const int rMin, const int iGran, const char arg, const int a);
 // Display brightness level on screen
 void display(const int brLevel);
@@ -42,17 +44,18 @@ void init(context & con);
 void draw(context & con, const int brLevel);
 void drawBars(context & con, const int brLeve);
 void drawBar(context & con, const int cu, const int nBar, const int nSpace, const std::string barNumber);
-// Save new brightness value to the file f (no error checking done).
+// Save int a to file at path f.
 void saveIntToFile(const std::string f, const int a);
+
 
 /* Main requires 1 or 2 command line argument's (this includes the program name)
    the 2nd argument must be either '+' or '-', if there are 2 arguments. */
 int main(int argc, char * argv[])
-{
+{				// Brightness level constraints.
+  constexpr int BR_RANGE_MAX {100}, BR_RANGE_MIN {10}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
   constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_1_INDEX {0}, ARG_2_INDEX {1};
   const std::string brLevelFileName {"/usr/tmp/brLevel"};
   int brLevel {getIntFromFile(BR_DEFAULT, brLevelFileName)}; // Attempt to get current brightness level.
-
 
   if(argc == MAX_ARGC)
     {
@@ -63,12 +66,15 @@ int main(int argc, char * argv[])
 	  brLevel = adjustBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, arg, brLevel);
 	  std::cout<<"level = "<<brLevel<<std::endl;
 	  if(brLevel == -1)
-	    return brLevel;	// Arg did not match any case
+	    {			// Arg did not match any case
+	      puts("FATAL ERROR: adjustBR_Val returned -1");
+	      return brLevel;
+	    }
 	  if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	    brLevel = BR_DEFAULT; // If we did not get a good brightness value from getIntFromFile.	  
 	  std::stringstream command {};
-	  command<<"/usr/home/cyan/.config/brightness/brctl.sh "<<std::to_string(brLevel);
-	  system(command.str().c_str());
+	  command<<"~/.config/brightness/brctl.sh "<<std::to_string(brLevel);
+	  system(command.str().c_str()); // Change brightness
 	  saveIntToFile(brLevelFileName, brLevel);
 	  display(brLevel);
 	  return 0;
@@ -124,28 +130,25 @@ bool checkBR_Val(const int rMax, const int rMin, const int iGran, const int a)
   if(a >= rMin && a <= rMax)
     if(a % iGran == 0)
       return true;		// A has passed all the tests. :)
-				// If we have reached this point 'a' should not hold a valid value.
-  return false;
+
+  return false;	// If we have reached this point a does not contain a valid value.
 }
 
 
-int adjustBR_Val(const int rMax, const int rMin, const int iGran, const char arg, const int a)
+int adjustBR_Val(const int rMax, const int rMin, const int iGran, const char sign, const int a)
 {
-  switch(arg)
+  switch(sign)
     {
     case '+':
       if(a == rMax)
 	break;
-      return a + iGran;
-      
+      return a + iGran;      
     case '-':
       if(a == rMin)
 	break;
       return a - iGran;
-    default:			// No matching case for arg!
-      return -1;
     }
-  return a;
+  return -1;
 }
 
 
