@@ -97,8 +97,6 @@ int main(const int argc, const char * argv[])
 	if(argc == MIN_ARGC)
 	  { /* Set brightness to level specified in brLevelFileName or if that value is out of
 	       range set level to BR_DEFAULT */
-	    if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
-	      brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
 	    doWork(brLevel, brLevelFileName);
 	    return 0;
 	  }
@@ -128,7 +126,7 @@ int getIntFromFile(const int rDefault, const char f [])
       }
     else
       {
-	std::cout<<"Cant open file at \""<<f<<"\".\n";
+	std::cerr<<"Error can't open file at \""<<f<<"\".\n";
 	ret = rDefault;
       }
     return ret;
@@ -180,7 +178,7 @@ void init(context & con)
   con.display = XOpenDisplay(nullptr);
   if( !con.display )
     {
-      std::cerr<< "Cannot to open con.display.";
+      std::cerr<< "Error can't open con.display.";
       exit(FATAL_ERROR_TWO);
     }
 				// Get screen geometry.
@@ -311,9 +309,16 @@ void drawBar(context & con, const int cu, const int nBar, const int nSpace, cons
 
 void saveIntToFile(const std::string f, const int a)
 {
-  std::ofstream out(f.c_str());      
-  out<<a<<'\0';
-  out.close();
+  std::ofstream out(f.c_str());
+  if(out.is_open())
+    {
+      out<<a<<'\0';    
+      out.close();
+    }
+  else
+    {
+      std::cerr<<"Error cant open file \""<<f<<"\" for writing\n";
+    }
 }
 
 
