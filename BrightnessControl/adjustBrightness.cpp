@@ -27,13 +27,23 @@ struct context
   unsigned int displayHeight;
   int windowLen;
 };
+constexpr int FATAL_ERROR_ONE		 	{-1}; // AdjustBR_Val returned -1.
+constexpr int FATAL_ERROR_TWO	 		{-2}; // Could not open display.
+constexpr int FATAL_ERROR_THREE_CYAN 		{-3}; // Failed to allocate color cyan.
+constexpr int FATAL_ERROR_THREE_PURPLE	 	{-4}; // Failed to allocate color purple.
+constexpr int FATAL_ERROR_THREE_BLUE 		{-5}; // Failed to allocate color blue.
+constexpr int FATAL_ERROR_THREE_GREEN		{-6}; // Failed to allocate color green.
+constexpr int FATAL_ERROR_THREE_YELLOW		{-7}; // Failed to allocate color yellow.
+constexpr int FATAL_ERROR_THREE_ORANGE 		{-8}; // Failed to allocate color orange.
+constexpr int FATAL_ERROR_THREE_RED		{-9}; // Failed to allocate color red.
+constexpr int FATAL_ERROR_THREE_DARK_RED	{-10}; // Failed to allocate color dark red.
 
 
 void printUsage(const std::string name);
 // Read an int for the file f.
 int getIntFromFile(const int rDefalut, const char f []);
 // Checks that a is inbetween or equal to rMax and rMin and that (a % iGran == 0) it is a multiple of iGran!
-bool checkBR_Val(const int rMax, const int rMin, const int iGran, const int a);
+bool checkBR_Val(const int rMin, const int rMax, const int iGran, const int a);
 /* Returns (a + iGran) or (a - iGran) depending on whether arg is a '+' or a '-'.
    Additionally a will not be altered if altering it would cause it to fall outside of the range
    [rMin, rMax], in effect a saturates at these ranges. */
@@ -48,32 +58,43 @@ void drawBar(context & con, const int cu, const int nBar, const int nSpace, cons
 void saveIntToFile(const std::string f, const int a);
 // Cange the brightness level, save the brightness level, show the brightness level.
 void doWork(const int level, const char file []);
-bool handle2ndArg(const char * argv []);
+bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RANGE_MAX,
+		  const int BR_INTERVAL_GRANULARITY, const int ARG_2_INDEX, int & brLevel);
 
 
 /* Main requires 1 or 2 command line argument's (this includes the program name)
    the 2nd argument must be either '+' or '-', if there are 2 arguments. */
-int main(int argc, char * argv[])
-{				// Brightness level constraints.
-  constexpr int BR_RANGE_MAX {100}, BR_RANGE_MIN {10}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
-  constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_1_INDEX {0}, ARG_2_INDEX {1};
+int main(const int argc, const char * argv[])
+{
+  constexpr int BR_RANGE_MIN {10}, BR_RANGE_MAX {100}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
+  constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_2_INDEX {1}; // ARG_1_INDEX {0}
   constexpr char brLevelFileName [] = "/usr/tmp/brLevel";
   int brLevel {getIntFromFile(BR_DEFAULT, brLevelFileName)}; // Attempt to get current brightness level.
 
-  if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
+  if(!checkBR_Val(BR_RANGE_MIN, BR_RANGE_MAX, BR_INTERVAL_GRANULARITY, brLevel))
     {
+      std::cout<<"Brightness level stored in \""<<brLevelFileName<<"\", not evenly divisible "
+	"by BR_INTERVAL_GRANULARITY ("<<BR_INTERVAL_GRANULARITY<<"). Setting brightness level to dealfult ("
+	       <<BR_DEFAULT<<")\n";
       brLevel = BR_DEFAULT;
-      doWork(brLevel, brLevelFileName);	      
+      doWork(brLevel, brLevelFileName);      
     }
   else
     {
       if(argc == MAX_ARGC)
 	{
-	  handle2ndArg(argv);
+	  if(handle2ndArg(argv, BR_RANGE_MIN, BR_RANGE_MAX, BR_INTERVAL_GRANULARITY, ARG_2_INDEX, brLevel))
+	    {
+	      doWork(brLevel, brLevelFileName);
+	    }
+	  else
+	    {			   // Malformed input.
+	      printUsage(argv[0]);
+	    }
 	}
       else
 	if(argc == MIN_ARGC)
-	  {				/* Set brightness to level specified in brLevelFileName or if that value is out of
+	  { /* Set brightness to level specified in brLevelFileName or if that value is out of
 					   range set level to BR_DEFAULT */
 	    if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	      brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
@@ -88,7 +109,7 @@ int main(int argc, char * argv[])
 
 
 
-
+  /*
   if(argc == MAX_ARGC)
     {
       const char arg {argv[ARG_2_INDEX][0]}; // If there is only one argument argv[ARG_2_INDEX] should equal '\0' 
@@ -113,7 +134,7 @@ int main(int argc, char * argv[])
   else
     if(argc == MIN_ARGC)
       {				/* Set brightness to level specified in brLevelFileName or if that value is out of
-				   range set level to BR_DEFAULT */
+				   range set level to BR_DEFAULT 
 	if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	  brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
 	doWork(brLevel, brLevelFileName);
@@ -122,7 +143,7 @@ int main(int argc, char * argv[])
     else
       printUsage(argv[0]);
   
-  return -1;
+  return -1;*/
 }
 
 
@@ -148,12 +169,11 @@ int getIntFromFile(const int rDefault, const char f [])
 }
 
 
-bool checkBR_Val(const int rMax, const int rMin, const int iGran, const int a)
+bool checkBR_Val(const int rMin, const int rMax, const int iGran, const int a)
 {
   if(a >= rMin && a <= rMax)
-    if(a % iGran == 0)
+    if((a % iGran) == 0)
       return true;		// A has passed all the tests. :)
-
   return false;	// If we have reached this point a does not contain a valid value.
 }
 
@@ -195,7 +215,7 @@ void init(context & con)
   if( !con.display )
     {
       std::cerr<< "Cannot to open con.display.";
-      exit(1);
+      exit(FATAL_ERROR_TWO);
     }
 				// Get screen geometry.
   con.screenNum = DefaultScreen(con.display);
@@ -221,49 +241,49 @@ void init(context & con)
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'cyan' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_CYAN);
     }
       rc = XAllocNamedColor(con.display, con.cmap, "Purple", &con.purple, &con.purple);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'purple' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_PURPLE);
     }
       rc = XAllocNamedColor(con.display, con.cmap, "Blue", &con.blue, &con.blue);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'blue' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_BLUE);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Green", &con.green, &con.green);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'green' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_GREEN);
     }
   rc = XAllocNamedColor(con.display, con.cmap, "Yellow", &con.yellow, &con.yellow);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'yellow' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_YELLOW);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Orange", &con.orange, &con.orange);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'orange' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_ORANGE);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Red", &con.red, &con.red);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'red' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_RED);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Dark Red", &con.darkRed, &con.darkRed);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'dark red' color.\n";
-      exit(1);
+      exit(FATAL_ERROR_THREE_DARK_RED);
     }
 }
 
@@ -289,7 +309,6 @@ void draw(context & con, const int brLevel)
 void drawBars(context & con, const int brLeve)
 {
   constexpr int levels = 10;//levels should be a devisor of 100                       
-  int level = brLeve / levels;
   for(int nBar {}, nSpace{}; nBar < brLeve; nBar +=levels, nSpace++)
     {
       std::stringstream barNumber {};
@@ -344,7 +363,8 @@ void doWork(const int level, const char file [])
 }
 
 
-bool handle2ndArg(const char * argv [])
+bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RANGE_MAX,
+		  const int BR_INTERVAL_GRANULARITY, const int ARG_2_INDEX, int & brLevel)
 {
   const char arg {argv[ARG_2_INDEX][0]}; // If there is only one argument argv[ARG_2_INDEX] should equal '\0' 
       
@@ -354,12 +374,13 @@ bool handle2ndArg(const char * argv [])
       std::cout<<"level = "<<brLevel<<'\n';
       if(brLevel == -1)
 	{			// Arg did not match any case
-	  puts("FATAL ERROR: adjustBR_Val returned -1");
-	  return brLevel;
+	  std::cout<<"FATAL ERROR: adjustBR_Val returned -1, brLevel = "<<brLevel<<'\n';
+	  exit(FATAL_ERROR_ONE);
 	}
-      doWork(brLevel, brLevelFileName);
-      return 0;
+      return true;
     }
   else
-    printUsage(argv[0]);	// Malformed input.
+    {
+      return false;
+    }
 }
