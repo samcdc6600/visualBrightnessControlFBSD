@@ -25,6 +25,7 @@ struct context
   int screenNum;
   unsigned int displayWidth;
   unsigned int displayHeight;
+  // I've put the following constants here for convenience.
   const int WINDOW_LEN {683};	// X offset (from the left) = displayWidth - WINDOW_LEN
   const int Y_OFFSET {2};	// Offset from the top of the screen.
   const int WINDOW_HEIGHT {15};	// Height of the window
@@ -37,6 +38,20 @@ struct context
   const int INNER_BAR_Y {4};
   const int INNER_BAR_WIDTH {42};
   const int INNER_BAR_HEIGHT {7};
+  const int STR_X_OFFSET {100};
+  const int STR_Y {12};
+  const int MINUS_X_OFFSET {117};
+  const int MINUS_Y {12};
+  const int PLUS_X {10};
+  const int PLUS_Y {12};
+  const int MINUS_ARC_X_OFFSET {122};
+  const int MINUS_ARC_Y {0};
+  const int PLUS_ARC_X {5};
+  const int PLUS_ARC_Y {0};
+  const int ARC_WIDTH {14};
+  const int ARC_HEIGHT {ARC_WIDTH}; // We're only interested in circles here :).
+  const int ARC_ANGLE_1 {0};
+  const int ARC_ANGLE_2 {360*64};
 };
 constexpr int EXIT_SUCESS			{1}; // Program executed without errors (hopefully.)
 constexpr int FATAL_ERROR_ONE		 	{-1}; // AdjustBR_Val returned -1.
@@ -274,12 +289,21 @@ void draw(context & con, const int brLevel)
     textInfo<<' ';
   textInfo<<"%"<<brLevel<<" :ssenthgirB";//everything to the left of the brLevel bar's    
   XSetForeground(con.display, con.gc, con.cyan.pixel);//set forground colour
-  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -100, 12, textInfo.str().c_str(),
+  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -con.STR_X_OFFSET, con.STR_Y, textInfo.str().c_str(),
 	      textInfo.str().size());
-  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -117, 12, "-", 1);
-  XDrawString(con.display, con.window, con.gc, 10, 12, "+", 1);
-  XDrawArc(con.display, con.window, con.gc, 5, 0, 14, 14, 0, 360*64);//right circle around "-"
-  XDrawArc(con.display, con.window, con.gc, con.WINDOW_LEN -122, 0, 14, 14, 0, 360*64);//left circle around "+"
+  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -con.MINUS_X_OFFSET, con.MINUS_Y, "-", 1);
+  XDrawString(con.display, con.window, con.gc, con.PLUS_X, con.PLUS_Y, "+", 1);
+  /* FROM: "https://tronche.com/gui/x/xlib/graphics/drawing/XDrawArc.html"
+    For an arc specified as [ x, y, width, height, angle1, angle2 ], the angles must be specified in the
+    effectively skewed coordinate system of the ellipse (for a circle, the angles and coordinate systems are
+    identical). The relationship between these angles and angles expressed in the normal coordinate system of the
+    screen (as measured with a protractor) is as follows:
+    skewed-angle = atan ( tan ( normal-angle ) * width / height ) + adjust */
+  XDrawArc(con.display, con.window, con.gc, con.WINDOW_LEN -con.MINUS_ARC_X_OFFSET,
+	   con.MINUS_ARC_Y, con.ARC_WIDTH, con.ARC_HEIGHT, con.ARC_ANGLE_1,
+	   con.ARC_ANGLE_2); // Right circle around "-"
+  XDrawArc(con.display, con.window, con.gc, con.PLUS_ARC_X, con.PLUS_ARC_Y, con.ARC_WIDTH, con.ARC_HEIGHT,
+	   con.ARC_ANGLE_1, con.ARC_ANGLE_2); // Left circle around "+".
   drawBars(con, brLevel);  //draw the brLevel bars                                    
 }
 
