@@ -65,7 +65,7 @@ bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RAN
 /* Main requires 1 or 2 command line argument's (this includes the program name)
    the 2nd argument must be either '+' or '-', if there are 2 arguments. */
 int main(const int argc, const char * argv[])
-{
+{				// BR_DEFAULT should be divisible by BR_INTERVAL_GRANULARITY!
   constexpr int BR_RANGE_MIN {10}, BR_RANGE_MAX {100}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
   constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_2_INDEX {1}; // ARG_1_INDEX {0}
   constexpr char brLevelFileName [] = "/usr/tmp/brLevel";
@@ -73,9 +73,9 @@ int main(const int argc, const char * argv[])
 
   if(!checkBR_Val(BR_RANGE_MIN, BR_RANGE_MAX, BR_INTERVAL_GRANULARITY, brLevel))
     {
-      std::cout<<"Brightness level stored in \""<<brLevelFileName<<"\", not evenly divisible "
-	"by BR_INTERVAL_GRANULARITY ("<<BR_INTERVAL_GRANULARITY<<"). Setting brightness level to dealfult ("
-	       <<BR_DEFAULT<<")\n";
+      std::cout<<"Brightness level stored in \""<<brLevelFileName<<"\", not evenly divisible by "
+	"BR_INTERVAL_GRANULARITY ("<<BR_INTERVAL_GRANULARITY<<") or was not able to open file containing"
+	" brightness level. Setting brightness level to dealfult ("<<BR_DEFAULT<<")\n";
       brLevel = BR_DEFAULT;
       doWork(brLevel, brLevelFileName);      
     }
@@ -164,7 +164,10 @@ int getIntFromFile(const int rDefault, const char f [])
 	in.close();
       }
     else
-      ret = rDefault;
+      {
+	std::cout<<"Cant open file at \""<<f<<"\".\n";
+	ret = rDefault;
+      }
     return ret;
 }
 
@@ -371,7 +374,6 @@ bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RAN
   if(argv[ARG_2_INDEX][1] == '\0' && (arg == '+' || arg == '-'))
     {			// We have a well formed second argument.
       brLevel = adjustBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, arg, brLevel);
-      std::cout<<"level = "<<brLevel<<'\n';
       if(brLevel == -1)
 	{			// Arg did not match any case
 	  std::cout<<"FATAL ERROR: adjustBR_Val returned -1, brLevel = "<<brLevel<<'\n';
