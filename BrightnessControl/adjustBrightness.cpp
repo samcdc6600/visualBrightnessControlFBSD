@@ -46,6 +46,8 @@ void drawBars(context & con, const int brLeve);
 void drawBar(context & con, const int cu, const int nBar, const int nSpace, const std::string barNumber);
 // Save int a to file at path f.
 void saveIntToFile(const std::string f, const int a);
+// Cange the brightness level, save the brightness level, show the brightness level.
+void doWork()
 
 
 /* Main requires 1 or 2 command line argument's (this includes the program name)
@@ -56,6 +58,12 @@ int main(int argc, char * argv[])
   constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_1_INDEX {0}, ARG_2_INDEX {1};
   const std::string brLevelFileName {"/usr/tmp/brLevel"};
   int brLevel {getIntFromFile(BR_DEFAULT, brLevelFileName)}; // Attempt to get current brightness level.
+
+  if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
+    brLevel = BR_DEFAULT;
+  else
+    {
+    }
 
   if(argc == MAX_ARGC)
     {
@@ -71,12 +79,8 @@ int main(int argc, char * argv[])
 	      return brLevel;
 	    }
 	  if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
-	    brLevel = BR_DEFAULT; // If we did not get a good brightness value from getIntFromFile.	  
-	  std::stringstream command {};
-	  command<<"~/.config/brightness/brctl.sh "<<std::to_string(brLevel);
-	  system(command.str().c_str()); // Change brightness level.
-	  saveIntToFile(brLevelFileName, brLevel); // Save brightness level.
-	  display(brLevel);	// Show brightness level.
+	    brLevel = BR_DEFAULT; // If we did not get a good brightness value from getIntFromFile.
+	  doWork();
 	  return 0;
 	}
 	else
@@ -88,13 +92,8 @@ int main(int argc, char * argv[])
 				   range set level to BR_DEFAULT */
 	if(!checkBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, brLevel))
 	  brLevel = BR_DEFAULT;	// If we did not get a good brightness value from getIntFromFile.
-	    
-	std::stringstream command {};
-	command<<"/usr/home/cyan/.config/brightness/brctl.sh "<<std::to_string(brLevel);
-	system(command.str().c_str());
-	std::cout<<"level = "<<brLevel<<std::endl;
-	saveIntToFile(brLevelFileName, brLevel);
-	display(brLevel);
+
+	doWork();
 	return 0;
       }
     else
@@ -307,4 +306,16 @@ void saveIntToFile(const std::string f, const int a)
   std::ofstream out(f.c_str());      
   out<<a<<"\0";
   out.close();
+}
+
+
+// Cange the brightness level, save the brightness level, show the brightness level.
+void doWork()
+{
+  std::stringstream command {};
+  command<<"~/.config/brightness/brctl.sh "<<std::to_string(brLevel);
+  system(command.str().c_str()); // Change brightness level.
+  std::cout<<"level = "<<brLevel<<"\n";
+  saveIntToFile(brLevelFileName, brLevel); // Save brightness level.
+  display(brLevel);	// Show brightness level.
 }
