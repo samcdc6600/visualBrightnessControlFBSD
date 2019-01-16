@@ -59,16 +59,15 @@ struct context
   const int ARC_ANGLE_2 {360*64};
 };
 constexpr int EXIT_SUCESS			{1}; // Program executed without errors (hopefully.)
-constexpr int FATAL_ERROR_ONE		 	{-1}; // AdjustBR_Val returned -1.
-constexpr int FATAL_ERROR_TWO	 		{-2}; // Could not open display.
-constexpr int FATAL_ERROR_THREE_CYAN 		{-3}; // Failed to allocate color cyan.
-constexpr int FATAL_ERROR_THREE_PURPLE	 	{-4}; // Failed to allocate color purple.
-constexpr int FATAL_ERROR_THREE_BLUE 		{-5}; // Failed to allocate color blue.
-constexpr int FATAL_ERROR_THREE_GREEN		{-6}; // Failed to allocate color green.
-constexpr int FATAL_ERROR_THREE_YELLOW		{-7}; // Failed to allocate color yellow.
-constexpr int FATAL_ERROR_THREE_ORANGE 		{-8}; // Failed to allocate color orange.
-constexpr int FATAL_ERROR_THREE_RED		{-9}; // Failed to allocate color red.
-constexpr int FATAL_ERROR_THREE_DARK_RED	{-10}; // Failed to allocate color dark red.
+constexpr int FATAL_ERROR_ONE		 	{-1}; // Could not open display.
+constexpr int FATAL_ERROR_TWO_CYAN 		{-2}; // Failed to allocate color cyan.
+constexpr int FATAL_ERROR_TWO_PURPLE	 	{-3}; // Failed to allocate color purple.
+constexpr int FATAL_ERROR_TWO_BLUE 		{-4}; // Failed to allocate color blue.
+constexpr int FATAL_ERROR_TWO_GREEN		{-5}; // Failed to allocate color green.
+constexpr int FATAL_ERROR_TWO_YELLOW		{-6}; // Failed to allocate color yellow.
+constexpr int FATAL_ERROR_TWO_ORANGE 		{-7}; // Failed to allocate color orange.
+constexpr int FATAL_ERROR_TWO_RED		{-8}; // Failed to allocate color red.
+constexpr int FATAL_ERROR_TWO_DARK_RED	{-9}; // Failed to allocate color dark red.
 
 
 // Read an int from the file f.
@@ -212,7 +211,7 @@ void init(context & con)
   if( !con.display )
     {
       std::cerr<< "Error can't open con.display.";
-      exit(FATAL_ERROR_TWO);
+      exit(FATAL_ERROR_ONE);
     }
 				// Get screen geometry.
   con.screenNum = DefaultScreen(con.display);
@@ -238,49 +237,49 @@ void init(context & con)
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'cyan' color.\n";
-      exit(FATAL_ERROR_THREE_CYAN);
+      exit(FATAL_ERROR_TWO_CYAN);
     }
       rc = XAllocNamedColor(con.display, con.cmap, "Purple", &con.purple, &con.purple);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'purple' color.\n";
-      exit(FATAL_ERROR_THREE_PURPLE);
+      exit(FATAL_ERROR_TWO_PURPLE);
     }
       rc = XAllocNamedColor(con.display, con.cmap, "Blue", &con.blue, &con.blue);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'blue' color.\n";
-      exit(FATAL_ERROR_THREE_BLUE);
+      exit(FATAL_ERROR_TWO_BLUE);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Green", &con.green, &con.green);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'green' color.\n";
-      exit(FATAL_ERROR_THREE_GREEN);
+      exit(FATAL_ERROR_TWO_GREEN);
     }
   rc = XAllocNamedColor(con.display, con.cmap, "Yellow", &con.yellow, &con.yellow);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'yellow' color.\n";
-      exit(FATAL_ERROR_THREE_YELLOW);
+      exit(FATAL_ERROR_TWO_YELLOW);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Orange", &con.orange, &con.orange);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'orange' color.\n";
-      exit(FATAL_ERROR_THREE_ORANGE);
+      exit(FATAL_ERROR_TWO_ORANGE);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Red", &con.red, &con.red);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'red' color.\n";
-      exit(FATAL_ERROR_THREE_RED);
+      exit(FATAL_ERROR_TWO_RED);
     }
     rc = XAllocNamedColor(con.display, con.cmap, "Dark Red", &con.darkRed, &con.darkRed);
   if(rc == 0)
     {
       std::cerr<<"XAllocNamedColor - failed to allocated 'dark red' color.\n";
-      exit(FATAL_ERROR_THREE_DARK_RED);
+      exit(FATAL_ERROR_TWO_DARK_RED);
     }
 }
 
@@ -361,17 +360,9 @@ bool handle2ndArg(const char * argv [], const int BR_RANGE_MIN, const int BR_RAN
   if(argv[ARG_2_INDEX][1] == '\0' && (arg == '+' || arg == '-'))
     {			// We have a well formed second argument.
       brLevel = adjustBR_Val(BR_RANGE_MAX, BR_RANGE_MIN, BR_INTERVAL_GRANULARITY, arg, brLevel);
-      if(brLevel == -1)
-	{			// Arg did not match any case
-	  std::cerr<<"FATAL ERROR: adjustBR_Val returned -1, brLevel = "<<brLevel<<'\n';
-	  exit(FATAL_ERROR_ONE);
-	}
       return true;
     }
-  else
-    {
-      return false;
-    }
+  return false;
 }
 
 
