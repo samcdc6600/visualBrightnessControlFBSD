@@ -25,12 +25,15 @@ struct context
   int screenNum;
   unsigned int displayWidth;
   unsigned int displayHeight;
-  // I've put the following constants here for convenience.
+  /* I've put the following constants here for convenience.
+     With the exception of Y_OFFSET (that referes to the absolute position of the window on the SCREEN all X or Y
+     constants that are postfixed with the word OFFSET are used with a modifying value and not as an absolute stand
+     alone value. This naming convention was adopted to convey the differences in uses of these different constants */
   const int WINDOW_LEN {683};	// X offset (from the left) = displayWidth - WINDOW_LEN
   const int Y_OFFSET {2};	// Offset from the top of the screen.
   const int WINDOW_HEIGHT {15};	// Height of the window
   const int BAR_SPACE_SIZE {44}; // Size of bar (outer) and space
-  const int BARS_OFFSET {174};	 // Offset of bars from text on right.
+  const int BARS_X {174};	 // Offset of bars from text on right.
   const int OUTER_BAR_Y {1};	 // Y Offset of outer bar
   const int OUTER_BAR_WIDTH {48};
   const int OUTER_BAR_HEIGHT {13};
@@ -337,7 +340,7 @@ void drawBar(context & con, const int cu, const int nBar, const int stride, cons
 {				// Draw outer bar.
   XSetForeground(con.display, con.gc, cu);  
   XFillRectangle(con.display, con.window, con.gc,
-		 con.WINDOW_LEN -(con.BARS_OFFSET + nBar + (stride*con.BAR_SPACE_SIZE)),
+		 con.WINDOW_LEN -(con.BARS_X + nBar + (stride*con.BAR_SPACE_SIZE)),
 		 con.OUTER_BAR_Y, con.OUTER_BAR_WIDTH, con.OUTER_BAR_HEIGHT);
   // Draw inner bar.
   XSetForeground(con.display, con.gc, con.blue.pixel);
