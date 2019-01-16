@@ -29,6 +29,8 @@ struct context
      With the exception of Y_OFFSET (that referes to the absolute position of the window on the SCREEN all X or Y
      constants that are postfixed with the word OFFSET are used with a modifying value and not as an absolute stand
      alone value. This naming convention was adopted to convey the differences in uses of these different constants */
+  const int SLEEP_TIMES {9};  // Number of times to go to sleep.
+  const int SLEEP_TIME {333}; // Time to sleep for in ms.
   const int WINDOW_LEN {683};	// X offset (from the left) = displayWidth - WINDOW_LEN
   const int Y_OFFSET {2};	// Offset from the top of the screen.
   const int WINDOW_HEIGHT {15};	// Height of the window
@@ -194,11 +196,11 @@ void display(const int brLevel)
 {
   context con;
   init(con);
-  for(int iter{}; iter < 9; ++iter) // 333*9 ~ 3000 (Sleep for 3 seconds.) 
+  for(int iter{}; iter < con.SLEEP_TIMES; ++iter) // 333*9 ~ 3000 (Sleep for 3 seconds.) 
     {
       draw(con, brLevel);
       XFlush(con.display); // Force x to flush it's buffers after we and draw before we sleep.
-      std::this_thread::sleep_for(std::chrono::milliseconds(333));
+      std::this_thread::sleep_for(std::chrono::milliseconds(con.SLEEP_TIME));
     }
   XCloseDisplay(con.display);
 }
@@ -345,7 +347,7 @@ void drawBar(context & con, const int cu, const int nBar, const int stride, cons
   // Draw inner bar.
   XSetForeground(con.display, con.gc, con.blue.pixel);
   XFillRectangle(con.display, con.window, con.gc,
-		 con.WINDOW_LEN -(con.BARS_OFFSET + nBar + (stride*con.BAR_SPACE_SIZE) - con.INNER_BAR_X_OFFSET),
+		 con.WINDOW_LEN -(con.BARS_X + nBar + (stride*con.BAR_SPACE_SIZE) - con.INNER_BAR_X_OFFSET),
 		 con.INNER_BAR_Y, con.INNER_BAR_WIDTH, con.INNER_BAR_HEIGHT);
   XSetForeground(con.display, con.gc, con.cyan.pixel);
 }
