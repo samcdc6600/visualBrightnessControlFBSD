@@ -72,7 +72,7 @@ enum
 
 
 // Checks that a is inbetween or equal to rMax and rMin and that (a % iGran == 0) it is a multiple of iGran!
-bool checkDiscreteRange(const int rMin, const int rMax, const int iGran, const int a);
+bool checkRange(const int rMin, const int rMax, const int a);
 // Save int a to file at path f.
 void saveIntToFile(const std::string f, const int a);
 void display(const int level);
@@ -88,7 +88,8 @@ void printUsage(const std::string name);
    the 2nd argument must be either '+' or '-', if there are 2 arguments. */
 int main(const int argc, const char * argv[])
 {				// BR_DEFAULT should be divisible by BR_INTERVAL_GRANULARITY!
-  constexpr int LEVEL_RANGE_MIN {10}, LEVEL_RANGE_MAX {100},  LEVEL_INTERVAL_GRANULARITY {10};
+  constexpr int LEVEL_RANGE_MIN {0}, LEVEL_RANGE_MAX {100},  LEVEL_INTERVAL_GRANULARITY {10},
+							       ROUNDING_THRESHOLD {5};
   constexpr int EXPECTED_ARGC {2}, ARG_INDEX_0 {1};
   int level {};
 
@@ -97,14 +98,20 @@ int main(const int argc, const char * argv[])
       std::stringstream sSLevel {};
       sSLevel<<argv[ARG_INDEX_0];
       sSLevel>>level;
-      if(!checkDiscreteRange(LEVEL_RANGE_MIN, LEVEL_RANGE_MAX, LEVEL_INTERVAL_GRANULARITY, level))
+      if(!checkRange(LEVEL_RANGE_MIN, LEVEL_RANGE_MAX, level))
 	{
-	  std::cerr<<"Argument \""<<level<<"\", not a number not evenly or divisible by "
-		   <<LEVEL_INTERVAL_GRANULARITY<<" and or not in range ["<<LEVEL_RANGE_MIN<<","
+	  std::cerr<<"Argument \""<<level<<"\", not a number or not in range ["<<LEVEL_RANGE_MIN<<","
 		   <<LEVEL_RANGE_MAX<<"]\n";
 	    return (FATAL_ERROR_ARG1);
 	}
-      display(level);	// Show brightness level.
+      if(level % LEVEL_INTERVAL_GRANULARITY >= ROUNDING_THRESHOLD)
+	{
+	  display(level - (level % LEVEL_INTERVAL_GRANULARITY) + LEVEL_INTERVAL_GRANULARITY);	// Show brightness level.
+	}
+      else
+	{
+	  display(level - (level % LEVEL_INTERVAL_GRANULARITY));	// Show brightness level.
+	}
     }
   else
     {
@@ -115,9 +122,9 @@ int main(const int argc, const char * argv[])
 }
 
 
-bool checkDiscreteRange(const int rMin, const int rMax, const int iGran, const int a)
+bool checkRange(const int rMin, const int rMax, const int a)
 {
-  if((a >= rMin && a <= rMax) && (a % iGran == 0))
+  if(a >= rMin && a <= rMax)
     {
       return true;
     }
