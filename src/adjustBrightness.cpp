@@ -94,8 +94,6 @@ void printUsage(const std::string name, const int range_min,
 		const int range_max);
 
 
-/* Main requires 1 or 2 command line argument's (this includes the program name)
-   the 2nd argument must be either '+' or '-', if there are 2 arguments. */
 int main(const int argc, const char * argv[])
 {
   constexpr int EXPECTED_ARGC {2}, ARG_INDEX_0 {1};
