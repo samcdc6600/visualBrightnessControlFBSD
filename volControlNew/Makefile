@@ -8,7 +8,7 @@ CXX	= clang++
 CXXFLAGS	= -std=c++2a -Wall -Wpedantic -Wextra -O2
 INCLUDES	= -I/usr/local/include/
 LIBS	= -lX11 -L/usr/local/lib/
-BIN_NAME	= visualBar
+BIN_NAME	= visualVolumeBar
 SRC	= ./src
 IDIR	= $(SRC)/include
 ODIR	= ./obj

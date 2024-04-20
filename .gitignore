@@ -1,0 +1,9 @@
+./*~
+./*#
+./leftHandSide/src/*~
+./leftHandSide/src/*#
+./leftHandSide/obj/*
+./rightHandSide/src/*~
+./rightHandSide/src/*#
+./rightHandSide/obj/*
+

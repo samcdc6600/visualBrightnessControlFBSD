@@ -26,22 +26,27 @@ struct context
   unsigned int displayWidth;
   unsigned int displayHeight;
   /* I've put the following constants here for convenience.
-     With the exception of Y_OFFSET (that referes to the absolute position of the window on the SCREEN all X or Y
-     constants that are postfixed with the word OFFSET are used with a modifying value and not as an absolute stand
-     alone value. This naming convention was adopted to convey the differences in uses of these different constants */
+     With the exception of Y_OFFSET (that referes to the absolute position of
+     the window on the SCREEN all X or Y constants that are postfixed with the
+     word OFFSET are used with a modifying value and not as an absolute stand
+     alone value. This naming convention was adopted to convey the differences
+     in uses of these different constants */
   const int SLEEP_TIMES {9};  // Number of times to go to sleep.
   const int SLEEP_TIME {333}; // Time to sleep for in ms.
-  const int WINDOW_LEN {683};	// X offset (from the left) = displayWidth - WINDOW_LEN
+  // X offset (from the left) = displayWidth - WINDOW_LEN
+  const int WINDOW_LEN {1280};	
   const int Y_OFFSET {2};	// Offset from the top of the screen.
   const int WINDOW_HEIGHT {15};	// Height of the window
-  const int BAR_SPACE_SIZE {44}; // Size of bar (outer) and space
-  const int BARS_X {174};	 // Offset of bars from text on right.
+  //  const int BARS_X {174};	 // Offset of bars from text on right.
+  const int BARS_X {240};	 // Offset of bars from text on right.
   const int OUTER_BAR_Y {1};	 // Y Offset of outer bar
-  const int OUTER_BAR_WIDTH {48};
+  const int OUTER_BAR_WIDTH {(WINDOW_LEN -BARS_X) / 10 + 2};
+  // Size of bar (outer) and space
+  const int BAR_SPACE_SIZE {OUTER_BAR_WIDTH -4};
   const int OUTER_BAR_HEIGHT {13};
   const int INNER_BAR_X_OFFSET {3};
   const int INNER_BAR_Y {4};
-  const int INNER_BAR_WIDTH {42};
+  const int INNER_BAR_WIDTH {(WINDOW_LEN -BARS_X) / 10 - 4};
   const int INNER_BAR_HEIGHT {7};
   const int STR_X_OFFSET {100};
   const int STR_Y {12};
@@ -58,16 +63,20 @@ struct context
   const int ARC_ANGLE_1 {0};
   const int ARC_ANGLE_2 {360*64};
 };
-constexpr int EXIT_SUCESS			{1}; // Program executed without errors (hopefully.)
-constexpr int FATAL_ERROR_ONE		 	{-1}; // Could not open display.
-constexpr int FATAL_ERROR_TWO_CYAN 		{-2}; // Failed to allocate color cyan.
-constexpr int FATAL_ERROR_TWO_PURPLE	 	{-3}; // Failed to allocate color purple.
-constexpr int FATAL_ERROR_TWO_BLUE 		{-4}; // Failed to allocate color blue.
-constexpr int FATAL_ERROR_TWO_GREEN		{-5}; // Failed to allocate color green.
-constexpr int FATAL_ERROR_TWO_YELLOW		{-6}; // Failed to allocate color yellow.
-constexpr int FATAL_ERROR_TWO_ORANGE 		{-7}; // Failed to allocate color orange.
-constexpr int FATAL_ERROR_TWO_RED		{-8}; // Failed to allocate color red.
-constexpr int FATAL_ERROR_TWO_DARK_RED	{-9}; // Failed to allocate color dark red.
+
+enum
+  {
+    EXIT_SUCESS,	       // Program executed without errors.
+    FATAL_ERROR_ONE = INT_MIN,	// Could not open display.
+    FATAL_ERROR_TWO_CYAN	,	// Failed to allocate color.
+    FATAL_ERROR_TWO_PURPLE,
+    FATAL_ERROR_TWO_BLUE,
+    FATAL_ERROR_TWO_GREEN,
+    FATAL_ERROR_TWO_YELLOW,
+    FATAL_ERROR_TWO_ORANGE,
+    FATAL_ERROR_TWO_RED,
+    FATAL_ERROR_TWO_DARK_RED,
+  };
 
 
 // Read an int from the file f.
@@ -97,9 +106,9 @@ void printUsage(const std::string name);
    the 2nd argument must be either '+' or '-', if there are 2 arguments. */
 int main(const int argc, const char * argv[])
 {				// BR_DEFAULT should be divisible by BR_INTERVAL_GRANULARITY!
-  constexpr int BR_RANGE_MIN {10}, BR_RANGE_MAX {100}, BR_INTERVAL_GRANULARITY {10}, BR_DEFAULT {80};
+  constexpr int BR_RANGE_MIN {0}, BR_RANGE_MAX {100}, BR_INTERVAL_GRANULARITY {5}, BR_DEFAULT {80};
   constexpr int MAX_ARGC {2}, MIN_ARGC {1}, ARG_2_INDEX {1}; // ARG_1_INDEX {0}.
-  constexpr char brLevelFileName [] = "/usr/tmp/brLevel";
+  constexpr char brLevelFileName [] = "/tmp/brLevel";
   int brLevel {getIntFromFile(BR_DEFAULT, brLevelFileName)}; // Attempt to get current brightness level.
 
   if(!checkBR_Val(BR_RANGE_MIN, BR_RANGE_MAX, BR_INTERVAL_GRANULARITY, brLevel))

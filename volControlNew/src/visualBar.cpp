@@ -43,15 +43,15 @@ struct context
   const int INNER_BAR_Y {4};
   const int INNER_BAR_WIDTH {(WINDOW_LEN -BARS_X) / 10 - 4};
   const int INNER_BAR_HEIGHT {7};
-  const int STR_X_OFFSET {100};
+  const int STR_X_OFFSET {0};
   const int STR_Y {12};
   const int MINUS_X_OFFSET {117};
   const int MINUS_Y {12};
-  const int PLUS_X {10};
+  const int PLUS_X {14};
   const int PLUS_Y {12};
-  const int MINUS_ARC_X_OFFSET {122};
+  const int MINUS_ARC_X {112};
   const int MINUS_ARC_Y {0};
-  const int PLUS_ARC_X {5};
+  const int PLUS_ARC_X {19};
   const int PLUS_ARC_Y {0};
   const int ARC_WIDTH {14};
   const int ARC_HEIGHT {ARC_WIDTH}; // We're only interested in circles here :).
@@ -99,7 +99,7 @@ int main(const int argc, const char * argv[])
   constexpr int EXPECTED_ARGC {2}, ARG_INDEX_0 {1};
   constexpr int LEVEL_RANGE_MIN {0}, LEVEL_RANGE_MAX {100};
   int level {};
-  const std::string unit {"Brightness"};
+  const std::string unit {"Volume"};
   bool ret {EXIT_SUCESS};
 	
   if(argc == EXPECTED_ARGC)
@@ -202,7 +202,7 @@ void init(context & con)
 
   //con.windowLen = 683;
   con.window = XCreateWindow(con.display, RootWindow(con.display, 0),
-			     con.displayWidth -con.WINDOW_LEN, con.Y_OFFSET,
+			     0, con.Y_OFFSET,
 			     con.WINDOW_LEN, con.WINDOW_HEIGHT, 0,
 			     CopyFromParent, CopyFromParent, CopyFromParent,
 			     CWOverrideRedirect, &con.attribs);
@@ -281,14 +281,15 @@ void draw(context & con, const int level, const int levelOrig,
   if(level < 100)
     textInfo<<' ';
   // Everything to the left of the level bar's
-  textInfo<<"%"<<levelOrig<<" :"<<unit.c_str();
+  textInfo<<unit.c_str()<<":       "<<levelOrig<<"%";
   XSetForeground(con.display, con.gc, con.cyan.pixel);//set forground colour
-  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -con.STR_X_OFFSET,
+  XDrawString(con.display, con.window, con.gc, con.STR_X_OFFSET,
 	      con.STR_Y, textInfo.str().c_str(),
 	      textInfo.str().size());
-  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN -
-	      con.MINUS_X_OFFSET, con.MINUS_Y, "-", 1);
-  XDrawString(con.display, con.window, con.gc, con.PLUS_X, con.PLUS_Y, "+", 1);
+  XDrawString(con.display, con.window, con.gc, con.MINUS_X_OFFSET, con.MINUS_Y,
+	      "-", 1);
+  XDrawString(con.display, con.window, con.gc, con.WINDOW_LEN - con.PLUS_X,
+	      con.PLUS_Y, "+", 1);
   /* FROM: "https://tronche.com/gui/x/xlib/graphics/drawing/XDrawArc.html"
      For an arc specified as [ x, y, width, height, angle1, angle2 ], the angles
      must be specified in the effectively skewed coordinate system of the
@@ -298,12 +299,12 @@ void draw(context & con, const int level, const int levelOrig,
      follows:
      skewed - angle = atan ( tan ( normal-angle ) * width / height ) + adjust */
   // Right circle around "-"
-  XDrawArc(con.display, con.window, con.gc, con.WINDOW_LEN -
-	   con.MINUS_ARC_X_OFFSET, con.MINUS_ARC_Y, con.ARC_WIDTH,
-	   con.ARC_HEIGHT, con.ARC_ANGLE_1, con.ARC_ANGLE_2);
+  XDrawArc(con.display, con.window, con.gc, con.MINUS_ARC_X, con.MINUS_ARC_Y,
+	   con.ARC_WIDTH, con.ARC_HEIGHT, con.ARC_ANGLE_1, con.ARC_ANGLE_2);
   // Left circle around "+".
-  XDrawArc(con.display, con.window, con.gc, con.PLUS_ARC_X, con.PLUS_ARC_Y,
-	   con.ARC_WIDTH, con.ARC_HEIGHT, con.ARC_ANGLE_1, con.ARC_ANGLE_2); 
+  XDrawArc(con.display, con.window, con.gc, con.WINDOW_LEN - con.PLUS_ARC_X,
+	   con.PLUS_ARC_Y, con.ARC_WIDTH, con.ARC_HEIGHT, con.ARC_ANGLE_1,
+	   con.ARC_ANGLE_2); 
   drawBars(con, level);  //draw the level bars
 }
 
@@ -337,14 +338,14 @@ void drawBar(context & con, const int cu, const int nBar, const int stride)
 {				// Draw outer bar.
   XSetForeground(con.display, con.gc, cu);  
   XFillRectangle(con.display, con.window, con.gc,
-		 con.WINDOW_LEN -(con.BARS_X + nBar +
+		 (138 + nBar +
 				  (stride*con.BAR_SPACE_SIZE)), con.OUTER_BAR_Y,
 		 con.OUTER_BAR_WIDTH, con.OUTER_BAR_HEIGHT);
   // Draw inner bar.
   XSetForeground(con.display, con.gc, con.blue.pixel);
   XFillRectangle(con.display, con.window, con.gc,
-		 con.WINDOW_LEN -(con.BARS_X + nBar +
-				  (stride*con.BAR_SPACE_SIZE) -
+		 (138 + nBar +
+				  (stride*con.BAR_SPACE_SIZE) +
 				  con.INNER_BAR_X_OFFSET),
 		 con.INNER_BAR_Y, con.INNER_BAR_WIDTH, con.INNER_BAR_HEIGHT);
   XSetForeground(con.display, con.gc, con.cyan.pixel);
